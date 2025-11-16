@@ -48,11 +48,65 @@ graph TB
 
 ### How It Works
 
-1. **Platform Stack** creates control project, admin team, and seeds BU Stack repository
-2. **BU Stack** receives project ID and admin token via `upstream_input`
+1. **Platform Stack** creates control project, admin team, GitHub repo, and HCP Terraform Stack
+2. **BU Stack** (connected to GitHub repo) receives project ID and admin token via `upstream_input`
 3. **bu-onboarding module** creates workspaces within the BU's project
 4. **YAML configuration** defines workspaces for different environments (dev/staging/prod)
 5. **Teams manage** their own infrastructure through their workspaces
+
+### How to Use This Module
+
+**🎯 IMPORTANT**: This module is **NOT used standalone**. It runs inside a BU Stack that the platform team creates for you.
+
+**Your Workflow as a BU Team Member:**
+
+1. **Platform team runs Platform Stack** →  Creates your:
+   - Control project: `BU_platform-engineering`
+   - Consumer projects: `plat-eng_kubernetes-platform`, etc.
+   - GitHub repository: `tfc-platform-engineering-bu-stack` (with seeded Stack files)
+   - HCP Terraform Stack (connected to the GitHub repo)
+
+2. **Clone your BU Stack repository**:
+   ```bash
+   git clone git@github.com:hashi-demo-lab/tfc-platform-engineering-bu-stack.git
+   cd tfc-platform-engineering-bu-stack
+   ```
+
+3. **Edit workspace configuration** in `configs/platform-engineering.yaml`:
+   ```yaml
+   business_unit: platform-engineering
+   
+   workspaces:
+     - workspace_name: k8s-dev-us-east-1
+       workspace_description: Kubernetes dev cluster
+       workspace_terraform_version: "1.13.5"
+       # ... more configuration
+   ```
+
+4. **Commit and push changes**:
+   ```bash
+   git add configs/platform-engineering.yaml
+   git commit -m "Add Kubernetes workspaces"
+   git push origin main
+   ```
+
+5. **Stack automatically runs** in HCP Terraform:
+   - Detects your commit (VCS-connected)
+   - Runs the bu-onboarding module component
+   - Creates/updates workspaces based on your YAML
+
+6. **Monitor in HCP Terraform UI**:
+   ```
+   https://app.terraform.io/app/cloudbrokeraz/projects/BU_platform-engineering/stacks/platform-engineering-bu-stack
+   ```
+
+**You do NOT**:
+- ❌ Run `terraform init` locally
+- ❌ Configure providers yourself
+- ❌ Manage state files
+- ❌ Use this module directly in your own Terraform configs
+
+**The Stack handles everything** - you just edit YAML and commit!
 
 ### Linked Stacks Pattern
 

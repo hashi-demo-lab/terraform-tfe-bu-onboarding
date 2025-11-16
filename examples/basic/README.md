@@ -1,154 +1,164 @@
 # BU Onboarding - Basic Example
 
-This example demonstrates minimal usage of the bu-onboarding module within a BU Stack.
+**IMPORTANT**: This module is designed to run **INSIDE a BU Stack repository** created by the platform-onboarding module. It is NOT meant to be used standalone.
+
+## Overview
+
+This example demonstrates minimal workspace creation within a BU Stack that was automatically created by the platform team.
+
+## How This Works
+
+```
+Platform Team runs platform-onboarding module
+  ↓
+Creates BU_platform-engineering project
+  ↓
+Creates GitHub repo: tfc-platform-engineering-bu-stack
+  ↓
+Seeds repo with Stack configuration (including this module)
+  ↓
+Creates HCP Terraform Stack connected to GitHub repo
+  ↓
+Platform Engineering team clones repo
+  ↓
+Updates configs/platform-engineering.yaml
+  ↓
+Commits and pushes changes
+  ↓
+Stack automatically runs (VCS-triggered)
+  ↓
+bu-onboarding module creates workspaces
+```
 
 ## Features
 
 - ✅ Single workspace creation
-- ✅ Basic variable configuration
-- ✅ Uses upstream inputs from platform Stack
-- ✅ Simple YAML configuration
-
-## Architecture
-
-```
-BU Stack (Finance)
-  │
-  ├─ Upstream Input: platform_stack
-  │  └─ Provides: bu_project_id, tfc_organization_name, vcs_oauth_token_id
-  │
-  └─ Component: bu-onboarding
-     └─ Creates: 1 workspace in BU_finance project
-```
+- ✅ Basic variable configuration  
+- ✅ VCS integration with GitHub
+- ✅ Auto-tagging with environment and business unit
 
 ## Prerequisites
 
-1. **Platform Stack deployed** - Must have BU infrastructure created
-2. **GitHub repo seeded** - This example assumes you're in a BU Stack repo created by platform
-3. **OIDC configured** - For BU-specific audience (e.g., `finance-team-*`)
+1. **Platform Stack deployed** - Platform team has created your BU infrastructure
+2. **GitHub repo exists** - `tfc-platform-engineering-bu-stack` repository created and seeded
+3. **HCP Terraform Stack created** - Stack connected to your GitHub repo
+4. **Repo cloned locally** - You have cloned the BU Stack repository
 
 ## Usage
 
-### 1. Configure OIDC for BU
+### 1. Navigate to Your BU Stack Repository
 
-Set up OIDC trust relationship with BU-specific audience: `finance-team-*`
-
-**AWS Trust Policy Example**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Principal": {
-      "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/app.terraform.io"
-    },
-    "Action": "sts:AssumeRoleWithWebIdentity",
-    "Condition": {
-      "StringEquals": {
-        "app.terraform.io:aud": "aws.workload.identity"
-      },
-      "StringLike": {
-        "app.terraform.io:sub": "organization:cloudbrokeraz:project:BU_finance:*"
-      }
-    }
-  }]
-}
+```bash
+cd tfc-platform-engineering-bu-stack
 ```
 
-### 2. Create Workspace Configuration
+### 2. Edit Workspace Configuration
 
-Edit `config/finance.yaml`:
+Edit `configs/platform-engineering.yaml`:
 
 ```yaml
+business_unit: platform-engineering
+
 workspaces:
-  - name: web-app-dev
-    description: Finance web application - development environment
-    project_name: BU_finance__web-app
-    execution_mode: remote
-    terraform_version: "1.13.5"
+  - workspace_name: k8s-dev-us-east-1
+    workspace_description: Kubernetes development cluster in us-east-1
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: true
+    workspace_tags:
+      - kubernetes
+      - development
+    
     vcs_repo:
-      identifier: CloudbrokerAz/finance-web-app
+      identifier: hashi-demo-lab/kubernetes-platform
       branch: develop
+    
     variables:
       - key: environment
         value: development
       - key: aws_region
         value: us-east-1
+      - key: cluster_version
+        value: "1.28"
+      - key: node_count
+        value: "3"
+      - key: enable_monitoring
+        value: "true"
+        hcl: true
 ```
 
-### 3. Deploy
+### 3. Commit and Push Changes
 
 ```bash
-# Initialize and validate
-terraform stacks providers-lock
-terraform stacks validate
-
-# Plan deployment
-terraform stacks plan --deployment=dev
-
-# Apply via HCP Terraform UI
+git add configs/platform-engineering.yaml
+git commit -m "Add development Kubernetes workspace"
+git push origin main
 ```
+
+### 4. Stack Automatically Runs
+
+The HCP Terraform Stack is VCS-connected and will automatically:
+1. Detect your commit
+2. Run a plan
+3. Show you the workspace that will be created
+4. Apply (after approval in HCP Terraform UI)
 
 ## What Gets Created
 
 ### TFE Resources
-- **Workspace**: `web-app-dev` in project `BU_finance__web-app`
+- **Workspace**: `k8s-dev-us-east-1` in project `BU_platform-engineering`
   - Terraform version: `1.13.5`
-  - Execution mode: `remote`
-  - VCS connected: `CloudbrokerAz/finance-web-app` (branch: `develop`)
-  - Variables: `environment=development`, `aws_region=us-east-1`
+  - Auto-apply: enabled
+  - VCS connected: `hashi-demo-lab/kubernetes-platform` (branch: `develop`)
+  - Variables: environment, aws_region, cluster_version, node_count, enable_monitoring
+  - Tags: kubernetes, development, environment:dev, business_unit:platform-engineering
 
-## Configuration Files
+## Verify Workspace Creation
 
-This example includes:
-- [`README.md`](README.md) - This file
-- [`config/finance.yaml`](config/finance.yaml) - Workspace configuration
-- Stack configuration files (pre-seeded by platform):
-  - `variables.tfcomponent.hcl`
-  - `providers.tfcomponent.hcl`
-  - `components.tfcomponent.hcl`
-  - `outputs.tfcomponent.hcl`
-  - `deployments.tfdeploy.hcl`
+1. **Check HCP Terraform UI**:
+   ```
+   https://app.terraform.io/app/cloudbrokeraz/projects/BU_platform-engineering
+   ```
 
-## Outputs
+2. **View Stack Run**:
+   ```
+   https://app.terraform.io/app/cloudbrokeraz/projects/BU_platform-engineering/stacks/platform-engineering-bu-stack
+   ```
 
-```hcl
-# Workspace information
-workspace_ids_map = {
-  "web-app-dev" = "ws-xxxxx"
-}
-
-# Deployment summary
-deployment_summary = {
-  total_workspaces = 1
-  workspaces = [
-    {
-      name         = "web-app-dev"
-      id           = "ws-xxxxx"
-      project_name = "BU_finance__web-app"
-    }
-  ]
-}
-```
+3. **Find Your Workspace**:
+   ```
+   https://app.terraform.io/app/cloudbrokeraz/workspaces/k8s-dev-us-east-1
+   ```
 
 ## Next Steps
 
-1. **Verify Workspace**: Check HCP Terraform for created workspace
-   ```
-   https://app.terraform.io/app/cloudbrokeraz/workspaces/web-app-dev
-   ```
-
-2. **Run Terraform**: Trigger a run in the workspace to deploy infrastructure
-
-3. **Add More Workspaces**: Edit `config/finance.yaml` to add staging/production workspaces
+1. **Trigger Workspace Run**: Queue a run in the newly created workspace to deploy infrastructure
+2. **Add More Workspaces**: Edit YAML to add staging/production workspaces
+3. **Configure Variables**: Add more variables or variable sets as needed
 
 ## Troubleshooting
 
-### "Project not found"
-Verify platform Stack has created the BU project. Check upstream_input is correct.
+### "Stack didn't run after push"
+- Verify Stack is VCS-connected in HCP Terraform UI
+- Check webhook configuration in GitHub repository settings
+- Ensure changes are on the correct branch (main)
 
-### "VCS OAuth token invalid"
-Ensure platform Stack has shared VCS token correctly via upstream outputs.
+### "Workspace already exists"
+- Check if workspace name is unique within the organization
+- Workspace may have been created by a previous run
 
-### "Insufficient permissions"
-Verify BU admin token is being used (from platform Stack outputs).
+### "Invalid VCS repository"
+- Ensure repository exists: `hashi-demo-lab/kubernetes-platform`
+- Verify VCS OAuth token has access to the repository
+- Check repository identifier format: `org/repo`
+
+## Configuration Files
+
+This example is meant to be used from within your seeded BU Stack repository which includes:
+- `README.md` - BU-specific documentation
+- `variables.tfcomponent.hcl` - Stack input variables
+- `providers.tfcomponent.hcl` - TFE provider configuration
+- `components.tfcomponent.hcl` - Component using bu-onboarding module
+- `outputs.tfcomponent.hcl` - Stack outputs
+- `deployments.tfdeploy.hcl` - Deployment definitions (dev/staging/prod)
+- `configs/platform-engineering.yaml` - Workspace configuration (this file)
+
