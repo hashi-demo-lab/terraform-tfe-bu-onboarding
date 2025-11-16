@@ -1,0 +1,179 @@
+# Complete workspace configuration for Platform Engineering Team
+# Demonstrates all features of bu-onboarding module
+
+business_unit: platform-engineering
+
+# ============================================================================
+# WORKSPACES
+# ============================================================================
+
+workspaces:
+  # Kubernetes Platform - Development
+  - workspace_name: k8s-dev-us-east-1
+    workspace_description: Kubernetes cluster - development environment
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: true
+    workspace_vcs_directory: terraform/kubernetes
+    workspace_tags:
+      - kubernetes
+      - development
+      - us-east-1
+    vcs_repo:
+      identifier: hashi-demo-lab/kubernetes-platform
+      branch: develop
+    variables:
+      environment:
+        value: development
+        description: Deployment environment
+      aws_region:
+        value: us-east-1
+        description: AWS region
+      cluster_version:
+        value: "1.28"
+        description: Kubernetes version
+      node_count:
+        value: "3"
+        description: Number of worker nodes
+      enable_monitoring:
+        value: "true"
+        hcl: true
+        description: Enable cluster monitoring
+      node_instance_types:
+        value: '["t3.medium"]'
+        hcl: true
+        description: Allowed EC2 instance types
+
+  # Kubernetes Platform - Staging
+  - workspace_name: k8s-staging-us-east-1
+    workspace_description: Kubernetes cluster - staging environment
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: false
+    workspace_vcs_directory: terraform/kubernetes
+    workspace_tags:
+      - kubernetes
+      - staging
+      - us-east-1
+    vcs_repo:
+      identifier: hashi-demo-lab/kubernetes-platform
+      branch: staging
+    variables:
+      environment:
+        value: staging
+      aws_region:
+        value: us-east-1
+      cluster_version:
+        value: "1.28"
+      node_count:
+        value: "5"
+      enable_monitoring:
+        value: "true"
+        hcl: true
+      enable_autoscaling:
+        value: "true"
+        hcl: true
+      node_instance_types:
+        value: '["t3.large", "t3.xlarge"]'
+        hcl: true
+
+  # Kubernetes Platform - Production
+  - workspace_name: k8s-prod-us-east-1
+    workspace_description: Kubernetes cluster - production environment
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: false
+    workspace_vcs_directory: terraform/kubernetes
+    workspace_tags:
+      - kubernetes
+      - production
+      - us-east-1
+      - critical
+    vcs_repo:
+      identifier: hashi-demo-lab/kubernetes-platform
+      branch: main
+    variables:
+      environment:
+        value: production
+      aws_region:
+        value: us-east-1
+      cluster_version:
+        value: "1.28"
+      node_count:
+        value: "10"
+      enable_monitoring:
+        value: "true"
+        hcl: true
+      enable_autoscaling:
+        value: "true"
+        hcl: true
+      enable_high_availability:
+        value: "true"
+        hcl: true
+      node_instance_types:
+        value: '["t3.xlarge", "t3.2xlarge"]'
+        hcl: true
+      backup_retention_days:
+        value: "90"
+
+  # Service Mesh - Development
+  - workspace_name: service-mesh-dev
+    workspace_description: Istio service mesh - development
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: true
+    workspace_vcs_directory: terraform/istio
+    workspace_tags:
+      - service-mesh
+      - istio
+      - development
+    vcs_repo:
+      identifier: hashi-demo-lab/service-mesh
+      branch: develop
+    variables:
+      environment:
+        value: development
+      mesh_type:
+        value: istio
+      istio_version:
+        value: "1.20.0"
+      enable_tracing:
+        value: "true"
+        hcl: true
+        description: Enable distributed tracing
+      enable_metrics:
+        value: "true"
+        hcl: true
+
+  # Service Mesh - Production
+  - workspace_name: service-mesh-prod
+    workspace_description: Istio service mesh - production
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: false
+    workspace_vcs_directory: terraform/istio
+    workspace_tags:
+      - service-mesh
+      - istio
+      - production
+      - critical
+    vcs_repo:
+      identifier: hashi-demo-lab/service-mesh
+      branch: main
+    variables:
+      environment:
+        value: production
+      mesh_type:
+        value: istio
+      istio_version:
+        value: "1.20.0"
+      enable_tracing:
+        value: "true"
+        hcl: true
+      enable_metrics:
+        value: "true"
+        hcl: true
+      enable_mtls:
+        value: "true"
+        hcl: true
+        description: Enable mutual TLS

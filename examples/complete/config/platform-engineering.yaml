@@ -1,0 +1,92 @@
+# Workspace configuration for Platform Engineering Team
+# Demonstrates workspace management with bu-onboarding module
+
+business_unit: platform-engineering
+
+# ============================================================================
+# WORKSPACES
+# ============================================================================
+
+workspaces:
+  # Kubernetes Platform - Development
+  - workspace_name: k8s-dev-us-east-1
+    workspace_description: Kubernetes cluster - development environment
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: true
+    workspace_vcs_directory: terraform/kubernetes
+    workspace_tags:
+      - kubernetes
+      - development
+    vcs_repo:
+      identifier: hashi-demo-lab/kubernetes-platform
+      branch: develop
+    variables:
+      environment:
+        value: development
+        description: Deployment environment
+      aws_region:
+        value: us-east-1
+      cluster_version:
+        value: "1.28"
+      node_count:
+        value: "3"
+      enable_monitoring:
+        value: "true"
+        hcl: true
+
+  # Kubernetes Platform - Production
+  - workspace_name: k8s-prod-us-east-1
+    workspace_description: Kubernetes cluster - production environment
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: false
+    workspace_vcs_directory: terraform/kubernetes
+    workspace_tags:
+      - kubernetes
+      - production
+      - critical
+    vcs_repo:
+      identifier: hashi-demo-lab/kubernetes-platform
+      branch: main
+    variables:
+      environment:
+        value: production
+      aws_region:
+        value: us-east-1
+      cluster_version:
+        value: "1.28"
+      node_count:
+        value: "10"
+      enable_monitoring:
+        value: "true"
+        hcl: true
+      enable_high_availability:
+        value: "true"
+        hcl: true
+
+  # Service Mesh - Production
+  - workspace_name: service-mesh-prod
+    workspace_description: Istio service mesh - production
+    execution_mode: remote
+    workspace_terraform_version: "1.13.5"
+    workspace_auto_apply: false
+    workspace_vcs_directory: terraform/istio
+    workspace_tags:
+      - service-mesh
+      - istio
+      - production
+    vcs_repo:
+      identifier: hashi-demo-lab/service-mesh
+      branch: main
+    variables:
+      environment:
+        value: production
+      mesh_type:
+        value: istio
+      enable_tracing:
+        value: "true"
+        hcl: true
+      enable_mtls:
+        value: "true"
+        hcl: true
