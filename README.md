@@ -18,36 +18,32 @@ This module enables **self-service workspace management** for business unit team
 
 ## Architecture
 
-This module is designed for the **downstream BU Stack** in the linked stacks pattern:
+This module is designed for the **downstream BU Stack** in the linked stacks pattern, consuming outputs from the platform-onboarding module:
 
 ```mermaid
 graph TB
-    PS[Platform Stack] -->|publish_output| BS[BU Stack]
-    
-    subgraph "Platform Stack (Platform Team)"
-        PS
-        PO[platform-onboarding module]
-        PO --> PROJ[Creates: BU Project]
-        PO --> TEAM[Creates: Admin Team]
-        PO --> TOKEN[Creates: Team Token]
-        PO --> REPO[Creates: GitHub Repo]
+    subgraph PS["Platform Stack (Platform_Team)"]
+        MOD[platform-onboarding module]
+        MOD --> D1[deployment: platform-engineering]
+        MOD --> D2[deployment: security-ops]
+        MOD --> D3[deployment: cloud-infrastructure]
     end
     
-    subgraph "BU Stack (Platform Engineering Team)"
-        BS
-        BO[bu-onboarding module]
-        BO --> WS1[dev workspaces]
-        BO --> WS2[staging workspaces]
-        BO --> WS3[production workspaces]
-        BO --> VS[variable sets]
-    end
+    D1 --> PE["Platform Engineering<br/>• BU Project (BU_platform-engineering)<br/>• Admin Team & Token<br/>• Consumer Projects<br/>• GitHub Repo Created"]
+    D2 --> SO["Security Operations<br/>• BU Project (BU_security-ops)<br/>• Admin Team & Token<br/>• Consumer Projects<br/>• GitHub Repo Created"]
+    D3 --> CI["Cloud Infrastructure<br/>• BU Project (BU_cloud-infrastructure)<br/>• Admin Team & Token<br/>• Consumer Projects<br/>• GitHub Repo Created"]
     
-    PROJ -.upstream_input.-> BO
-    TOKEN -.upstream_input.-> BO
+    PE -.publish_output<br/>project_id, token.-> PE_BU["Platform Engineering BU Stack<br/>(bu-onboarding module)<br/>• Dev Workspaces<br/>• Staging Workspaces<br/>• Production Workspaces"]
+    SO -.publish_output<br/>project_id, token.-> SO_BU["Security Operations BU Stack<br/>(bu-onboarding module)<br/>• Dev Workspaces<br/>• Staging Workspaces<br/>• Production Workspaces"]
+    CI -.publish_output<br/>project_id, token.-> CI_BU["Cloud Infrastructure BU Stack<br/>(bu-onboarding module)<br/>• Dev Workspaces<br/>• Staging Workspaces<br/>• Production Workspaces"]
     
     style PS fill:#7B42BC,color:#fff
-    style BS fill:#60A5FA,color:#000
-    style BO fill:#34D399,color:#000
+    style PE fill:#60A5FA,color:#000
+    style SO fill:#F59E0B,color:#000
+    style CI fill:#10B981,color:#000
+    style PE_BU fill:#BFDBFE,color:#000
+    style SO_BU fill:#FED7AA,color:#000
+    style CI_BU fill:#A7F3D0,color:#000
 ```
 
 ### How It Works
